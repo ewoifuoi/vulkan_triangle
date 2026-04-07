@@ -2,12 +2,23 @@
 #include <stdexcept>
 #include <vulkan/vulkan_core.h>
 #include <GLFW/glfw3.h>
-
+#include <cstring>
 #include <iostream>
 #include <cstdlib>
+#include <vector>
 
 constexpr uint32_t WIDTH = 800;
 constexpr uint32_t HEIGHT = 600;
+
+const std::vector<const char*> validationLayers = {
+    "VK_LAYER_KHRONOS_validation"
+};
+
+#ifdef NDEBUG
+const bool enableValidationLayers = false;
+#else
+const bool enableValidationLayers = true;
+#endif
 
 class HelloTriangleApplication {
 public:
@@ -73,6 +84,23 @@ private:
         if(vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
             throw std::runtime_error("failed to create instance!");
         }
+    }
+
+    bool checkValidationLayerSupport() {
+        uint32_t layerCount;
+        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+        std::vector<VkLayerProperties> availableLayers(layerCount);
+        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+        for(const char* layerName : validationLayers) {
+            bool layerFound = false;
+            for(const auto& layerProperties : availableLayers) {
+                if(strcmp(layerName, layerProperties.layerName) == 0) {
+                    layerFound = true;
+                }
+            }
+            if(!layerFound) return false;
+        }
+        return true;
     }
 };
 
