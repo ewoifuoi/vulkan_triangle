@@ -35,6 +35,7 @@ private:
     GLFWwindow* window;
     VkInstance instance;
     VkDebugUtilsMessengerEXT debugMessenger;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     
     void initWindow() {
         glfwInit();
@@ -46,6 +47,7 @@ private:
     void initVulkan() {
         createInstance();
         setupDebugMessenger();
+        pickPhysicalDevice();
     }
 
     void mainLoop() {
@@ -104,7 +106,7 @@ private:
         for(const char* layerName : validationLayers) {
             bool layerFound = false;
             for(const auto& layerProperties : availableLayers) {
-                if(strcmp(layerName, layerProperties.layerName) == 0) {
+                if(0 == strcmp(layerName, layerProperties.layerName)) {
                     layerFound = true;
                 }
             }
@@ -150,7 +152,7 @@ private:
 
     VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
         auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
-        if(func != nullptr) {
+        if(nullptr != func) {
             return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
         }
         else {
@@ -169,8 +171,33 @@ private:
 
     void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
-        if (func != nullptr) {
+        if (nullptr != func) {
             func(instance, debugMessenger, pAllocator);
+        }
+    }
+
+    bool isDeviceSuitable(VkPhysicalDevice device) {
+        return true;
+    }
+
+    void pickPhysicalDevice() {
+        uint32_t deviceCount = 0;
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+        if(0 == deviceCount) {
+            throw std::runtime_error("failed to find GPUs with Vulkan support!");
+        }
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+        for(const auto& device : devices) {
+            if(isDeviceSuitable(device)) {
+                physicalDevice = device;
+                break;
+            }
+        }
+        if(VK_NULL_HANDLE == physicalDevice) {
+            throw std::runtime_error("failed to find a suitable GPU!");
         }
     }
 
