@@ -73,7 +73,6 @@ private:
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
 
-
         auto extensions = getRequiredExtensions();
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
@@ -137,11 +136,32 @@ private:
             VkDebugUtilsMessageTypeFlagsEXT messageType,
             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
             void* pUserData) {
+        
+        const char* COLOR_RESET   = "\033[0m";
+        const char* COLOR_VERBOSE = "\033[0m";
+        const char* COLOR_INFO    = "\033[36m";
+        const char* COLOR_WARNING = "\033[33m";
+        const char* COLOR_ERROR   = "\033[31m";
+        const char* color = COLOR_RESET;
+        
+        if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+            color = COLOR_ERROR;
+        } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+            color = COLOR_WARNING;
+        } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+            color = COLOR_INFO;
+        } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+            color = COLOR_VERBOSE;
+        }
 
-        uint32_t flag = (1 << (DEBUG_LEVEL - 1));
+        VkDebugUtilsMessageSeverityFlagBitsEXT minSeverity;
+        if (DEBUG_LEVEL == 1) minSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT;
+        else if (DEBUG_LEVEL == 2) minSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT;
+        else if (DEBUG_LEVEL == 3) minSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+        else minSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 
-        if(messageSeverity >= flag) {
-            std::cerr << pCallbackData->pMessage << std::endl;
+        if(messageSeverity >= minSeverity) {
+            std::cerr << color << pCallbackData->pMessage << COLOR_RESET << std::endl;
         }
 
         return VK_FALSE;
@@ -150,7 +170,7 @@ private:
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
         createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
         createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         createInfo.pfnUserCallback = debugCallback;
     }
@@ -175,8 +195,10 @@ private:
     void Log(const char* message, VkDebugUtilsMessageSeverityFlagBitsEXT severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
         if(!enableValidationLayers) return;
 
-        std::string prefix = "[Debug INFO]: ";
-        std::string fullMessage = prefix + message;
+        const char* COLOR_INFO    = "\033[36m";
+        const char* COLOR_RESET   = "\033[0m";
+        std::string prefix = "[Debug Log]: ";
+        std::string fullMessage = COLOR_INFO + prefix + message + COLOR_RESET;
 
         VkDebugUtilsMessengerCallbackDataEXT callbackData{};
         callbackData.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
