@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <optional>
 #include <stdexcept>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_core.h>
@@ -50,7 +51,6 @@ private:
         createInstance();
         setupDebugMessenger();
         pickPhysicalDevice();
-        Log("test");
     }
 
     void mainLoop() {
@@ -226,7 +226,8 @@ private:
     }
 
     bool isDeviceSuitable(VkPhysicalDevice device) {
-        return true;
+        QueueFamilyIndices indices = findQueueFamilies(device);
+        return indices.isComplete();
     }
 
     void pickPhysicalDevice() {
@@ -250,6 +251,33 @@ private:
         }
     }
 
+    struct QueueFamilyIndices {
+        std::optional<uint32_t> graphicsFamily;
+        bool isComplete() {
+            return graphicsFamily.has_value();
+        }
+    };
+
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+        QueueFamilyIndices indices;
+
+        uint32_t queueFamilyCount = 0;
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+        std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+        vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+        int i = 0;
+        for(const auto& queueFamily : queueFamilies) {
+            if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                indices.graphicsFamily = i;
+                Log("success!");
+            }
+            i++;
+        }
+
+        return indices;
+    }
+
     void cleanup() {
         if(enableValidationLayers) {
             DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
@@ -260,8 +288,7 @@ private:
     }
 };
 
-int main()
-{
+int main() {
     try
     {
         HelloTriangleApplication app;
