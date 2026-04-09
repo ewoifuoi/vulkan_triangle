@@ -8,6 +8,8 @@
 #include <cstdlib>
 #include <vector>
 
+#define DEBUG_LEVEL 3
+
 constexpr uint32_t WIDTH = 800;
 constexpr uint32_t HEIGHT = 600;
 
@@ -48,6 +50,7 @@ private:
         createInstance();
         setupDebugMessenger();
         pickPhysicalDevice();
+        Log("test");
     }
 
     void mainLoop() {
@@ -135,8 +138,10 @@ private:
             const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
             void* pUserData) {
 
-        if(messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-            std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        uint32_t flag = (1 << (DEBUG_LEVEL - 1));
+
+        if(messageSeverity >= flag) {
+            std::cerr << pCallbackData->pMessage << std::endl;
         }
 
         return VK_FALSE;
@@ -158,6 +163,28 @@ private:
         else {
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
+    }
+
+    void SubmitDebugUtilsMessageEXT(VkInstance instance, VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData) {
+        auto func = (PFN_vkSubmitDebugUtilsMessageEXT) vkGetInstanceProcAddr(instance, "vkSubmitDebugUtilsMessageEXT");
+        if(nullptr != func) {
+            func(instance, messageSeverity, messageType, pCallbackData);
+        }
+    }
+
+    void Log(const char* message, VkDebugUtilsMessageSeverityFlagBitsEXT severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        if(!enableValidationLayers) return;
+
+        std::string prefix = "[Debug INFO]: ";
+        std::string fullMessage = prefix + message;
+
+        VkDebugUtilsMessengerCallbackDataEXT callbackData{};
+        callbackData.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CALLBACK_DATA_EXT;
+        callbackData.pMessageIdName = "LOG";
+        callbackData.messageIdNumber = 0;
+        callbackData.pMessage = fullMessage.c_str();
+
+        SubmitDebugUtilsMessageEXT(instance, severity, VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT, &callbackData);
     }
 
     void setupDebugMessenger() {
