@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_core.h>
 #include <GLFW/glfw3.h>
@@ -260,7 +261,6 @@ private:
 
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
         QueueFamilyIndices indices;
-
         uint32_t queueFamilyCount = 0;
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
@@ -270,7 +270,7 @@ private:
         for(const auto& queueFamily : queueFamilies) {
             if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphicsFamily = i;
-                Log("success!");
+                Log(("graphics queue indice: "+std::to_string(i)).c_str());
             }
             i++;
         }
