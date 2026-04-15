@@ -827,6 +827,7 @@ private:
     void drawFrame() {
         vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
         uint32_t imageIndex;
+        std::cout<<imageIndex<<std::endl;
         vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
         vkResetFences(device, 1, &inFlightFence);
@@ -861,7 +862,6 @@ private:
         presentInfo.pImageIndices = &imageIndex;
 
         vkQueuePresentKHR(presentQueue, &presentInfo);
-        vkDeviceWaitIdle(device);
     }
 
     void cleanup() {
