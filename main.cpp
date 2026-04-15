@@ -336,12 +336,12 @@ private:
         int i = 0;
         for(const auto& queueFamily : queueFamilies) {
 
-            if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            if(!indices.graphicsFamily.has_value() && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphicsFamily = i;
             }
 
             vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-            if(presentSupport) {
+            if(!indices.presentFamily.has_value() && presentSupport) {
                 indices.presentFamily = i;
             }
 
@@ -827,13 +827,13 @@ private:
     void drawFrame() {
         vkWaitForFences(device, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
         uint32_t imageIndex;
-        std::cout<<imageIndex<<std::endl;
         vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
-        vkResetFences(device, 1, &inFlightFence);
 
         vkResetCommandBuffer(commandBuffer, 0);
         recordCommandBuffer(commandBuffer, imageIndex);
+
+        vkResetFences(device, 1, &inFlightFence);
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
@@ -872,6 +872,7 @@ private:
         for(auto framebuffer : swapChainFramebuffers) {
             vkDestroyFramebuffer(device, framebuffer, nullptr);
         }
+        vkDestroyPipeline(device, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
         vkDestroyRenderPass(device, renderPass, nullptr);
         for(auto imageView : swapChainImageViews) {
