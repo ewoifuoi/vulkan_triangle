@@ -336,12 +336,12 @@ private:
         int i = 0;
         for(const auto& queueFamily : queueFamilies) {
 
-            if(!indices.graphicsFamily.has_value() && queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            if(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 indices.graphicsFamily = i;
             }
 
             vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-            if(!indices.presentFamily.has_value() && presentSupport) {
+            if(presentSupport) {
                 indices.presentFamily = i;
             }
 
@@ -450,8 +450,8 @@ private:
             int width, height;
             glfwGetFramebufferSize(window, &width, &height);
             VkExtent2D actualExtent = {
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height)
+                static_cast<uint32_t>(width*2),
+                static_cast<uint32_t>(height*2)
             };
 
             actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
@@ -829,11 +829,10 @@ private:
         uint32_t imageIndex;
         vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
+        vkResetFences(device, 1, &inFlightFence);
 
         vkResetCommandBuffer(commandBuffer, 0);
         recordCommandBuffer(commandBuffer, imageIndex);
-
-        vkResetFences(device, 1, &inFlightFence);
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
@@ -862,6 +861,7 @@ private:
         presentInfo.pImageIndices = &imageIndex;
 
         vkQueuePresentKHR(presentQueue, &presentInfo);
+        vkDeviceWaitIdle(device);
     }
 
     void cleanup() {
@@ -872,7 +872,6 @@ private:
         for(auto framebuffer : swapChainFramebuffers) {
             vkDestroyFramebuffer(device, framebuffer, nullptr);
         }
-        vkDestroyPipeline(device, graphicsPipeline, nullptr);
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
         vkDestroyRenderPass(device, renderPass, nullptr);
         for(auto imageView : swapChainImageViews) {
