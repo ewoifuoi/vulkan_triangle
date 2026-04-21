@@ -564,6 +564,7 @@ private:
     }
 
     void createGraphicsPipeline() {
+
         auto vertShaderCode = readFile("../shaders/shader.vert.spv");
         auto fragShaderCode = readFile("../shaders/shader.frag.spv");
 
