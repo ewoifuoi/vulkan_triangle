@@ -925,7 +925,6 @@ private:
         for(auto imageView : swapChainImageViews) {
             vkDestroyImageView(device, imageView, nullptr);
         }
-        vkDestroySwapchainKHR(device, swapChain, nullptr);
     }
 
     void recreateSwapChain() {
@@ -936,6 +935,7 @@ private:
             glfwWaitEvents();
         }
         vkDeviceWaitIdle(device);
+        cleanupSwapChain();
         createSwapChain();
         createImageViews();
         createFramebuffers();
